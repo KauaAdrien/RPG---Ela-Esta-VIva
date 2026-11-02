@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVV - Relatório de Campo & Ficha de Agente (Juína)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ovv: {
+                            900: '#0d0d0b',
+                            800: '#171714',
+                            700: '#24241f',
+                            600: '#36362e',
+                            green: '#786e4c',
+                            lightGreen: '#d4c28d',
+                            toxic: '#cca652',
+                            bio: '#a39261',
+                            alert: '#b84a39',
+                            amber: '#c7803a',
+                            rust: '#8c4331',
+                            swamp: '#4d5238'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0c0a;
+            color: #e6e2d3;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .ovv-border {
+            border: 1px solid rgba(212, 194, 141, 0.35);
+            box-shadow: 0 0 12px rgba(199, 128, 58, 0.08);
+        }
+        .ovv-card {
+            background: linear-gradient(135deg, #171714 0%, #21211b 100%);
+            border: 1px solid rgba(212, 194, 141, 0.2);
+            border-radius: 0.5rem;
+        }
+        .ovv-btn {
+            background: linear-gradient(135deg, #786e4c 0%, #4d4630 100%);
+            border: 1px solid #d4c28d;
+        }
+        .glow-green {
+            text-shadow: 0 0 8px rgba(212, 194, 141, 0.4);
+        }
+        .warning-divider {
+            color: #c7803a;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.15em;
+        }
+        /* Estilos de Impressão / PDF */
+        @media print {
+            header, button, label[title], #toast, #dice-modal, #modals-container {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+            }
+            .ovv-card {
+                background: #ffffff !important;
+                border: 1px solid #666666 !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+            input, textarea, select {
+                background: transparent !important;
+                color: #000000 !important;
+                border-bottom: 1px solid #666 !important;
+            }
+            h1, h2, h3, h4, .font-mono {
+                color: #000000 !important;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0c0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #24241f;
+            border-radius: 4px;
+            border: 1px solid rgba(212, 194, 141, 0.25);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4c28d;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#0c0c0a] text-[#e6e2d3] antialiased selection:bg-ovv-lightGreen selection:text-black pb-16">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-ovv-800 ovv-border text-ovv-lightGreen px-4 py-3 rounded-lg shadow-2xl flex items-center space-x-3">
+        <i class="fa-solid fa-folder-closed text-ovv-lightGreen text-xl"></i>
+        <span id="toast-message" class="font-mono text-xs">Dados salvos com sucesso no arquivo do Agente.</span>
+    </div>
+
+    <!-- Dice Roller Modal -->
+    <div id="dice-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="ovv-card max-w-md w-full p-6 text-center relative animate-fade-in">
+            <button onclick="closeDiceModal()" class="absolute top-4 right-4 text-stone-400 hover:text-ovv-lightGreen">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="text-xs font-mono text-ovv-lightGreen tracking-widest mb-1">REGISTRO DE TESTE DE CAMPO</div>
+            <h3 class="font-mono text-xl text-stone-100 font-bold mb-2" id="dice-title">Rolagem de Dado</h3>
+            <div id="dice-result-container" class="my-6">
+                <div class="text-6xl font-black font-mono text-ovv-lightGreen glow-green mb-2" id="dice-result">-</div>
+                <div class="text-xs text-stone-400 font-mono" id="dice-breakdown">Clique em executar para rolar d20 + Modificador.</div>
+            </div>
+            <button onclick="executeRoll()" class="w-full py-3 ovv-btn text-stone-100 font-bold rounded font-mono hover:opacity-90 transition shadow-lg tracking-wider">
+                <i class="fa-solid fa-dice text-lg mr-2"></i> EXECUTAR ROLAGEM (d20)
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Navigation / Header bar -->
+    <header class="bg-ovv-800 border-b border-ovv-lightGreen/20 sticky top-0 z-40 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded bg-ovv-700 border border-ovv-lightGreen flex items-center justify-center text-ovv-lightGreen font-mono font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-magnifying-glass font-bold"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-ovv-green text-stone-100 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold uppercase">OVV</span>
+                        <h1 class="font-mono text-lg font-bold tracking-wider text-ovv-lightGreen">O VERDE DO VIOLINISTA</h1>
+                        <span class="text-xs font-mono text-ovv-alert font-bold ml-2 animate-pulse">ꍟ꒒ꍏ ꍟꌗ꓄꓄ꍏ ꃴꀤꃴꍏ</span>
+                    </div>
+                    <p class="text-[11px] text-stone-400 font-mono">Dossiê Operacional & Ficha de Agente — Operação Juína (MT)</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="openDiceModal('Teste Geral', 0)" class="bg-ovv-800 hover:bg-ovv-700 text-ovv-lightGreen border border-ovv-lightGreen/30 px-3 py-1.5 rounded text-xs font-mono transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-dice"></i>
+                    <span>Rolar d20</span>
+                </button>
+                <button onclick="exportPDF()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 font-bold px-3 py-1.5 rounded text-xs font-mono transition flex items-center space-x-1 shadow-md" title="Baixar PDF / Imprimir">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span class="hidden sm:inline">PDF</span>
+                </button>
+                <button onclick="manualSave()" class="bg-ovv-lightGreen hover:bg-[#e3d5ab] text-stone-900 font-bold px-3 py-1.5 rounded text-xs font-mono transition flex items-center space-x-1 shadow-md">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Salvar</span>
+                </button>
+                <button onclick="exportJSON()" class="bg-ovv-800 hover:bg-ovv-700 text-ovv-lightGreen border border-ovv-lightGreen/30 px-3 py-1.5 rounded text-xs font-mono transition flex items-center space-x-1" title="Exportar (JSON)">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="hidden sm:inline">Exportar</span>
+                </button>
+                <label class="bg-ovv-800 hover:bg-ovv-700 text-ovv-lightGreen border border-ovv-lightGreen/30 px-3 py-1.5 rounded text-xs font-mono transition flex items-center space-x-1 cursor-pointer" title="Importar (JSON)">
+                    <i class="fa-solid fa-upload"></i>
+                    <span class="hidden sm:inline">Importar</span>
+                    <input type="file" id="import-file" accept=".json" onchange="importJSON(event)" class="hidden">
+                </label>
+                <button onclick="resetData()" class="bg-stone-900 hover:bg-stone-800 text-ovv-alert border border-ovv-alert/40 px-2.5 py-1.5 rounded text-xs font-mono transition" title="Restaurar Padrões">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- ALERTA ENIGMÁTICO TOPO -->
+        <div class="text-center bg-stone-900/90 border border-ovv-alert/50 py-2 rounded shadow-inner">
+            <span class="font-mono text-xs text-ovv-alert font-bold tracking-widest uppercase">
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i> ꍟ꒒ꍏ ꍟꌗ꓄ꍏ ꃴꀤꃴꍏ <i class="fa-solid fa-triangle-exclamation ml-2"></i>
+            </span>
+        </div>
+
+        <!-- 1. IDENTIFICAÇÃO DO AGENTE E DA MISSÃO -->
+        <section class="ovv-card p-5 md:p-6 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none text-ovv-lightGreen">
+                <i class="fa-solid fa-tree text-9xl"></i>
+            </div>
+            
+            <div class="border-b border-ovv-lightGreen/15 pb-3 mb-4 flex flex-wrap justify-between items-center gap-2">
+                <span class="font-mono text-xs font-bold text-ovv-lightGreen flex items-center">
+                    <i class="fa-solid fa-folder-open mr-2"></i> <———————⚠︎———————> DOSSIÊ DO AGENTE <———————⚠︎———————>
+                </span>
+                <span class="text-[10px] font-mono text-ovv-toxic bg-stone-900 border border-ovv-toxic/40 px-2 py-0.5 rounded">
+                    DESLOCAMENTO: 9m
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-[11px] uppercase font-mono text-ovv-lightGreen font-semibold mb-1">Nome do Personagem</label>
+                    <input type="text" id="char-name" value="Cassian" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 text-stone-100 font-mono text-sm focus:outline-none focus:border-ovv-lightGreen">
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase font-mono text-ovv-lightGreen font-semibold mb-1">Jogador</label>
+                    <input type="text" id="player-name" value="Adrien" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 text-stone-100 font-mono text-sm focus:outline-none focus:border-ovv-lightGreen">
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase font-mono text-ovv-alert font-semibold mb-1"><i class="fa-solid fa-skull mr-1"></i> Medo Principal</label>
+                    <input type="text" id="char-medo" value="Aranhas" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-alert/40 rounded px-3 py-1.5 text-stone-200 font-mono text-sm focus:outline-none focus:border-ovv-alert">
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase font-mono text-ovv-lightGreen font-semibold mb-1">Classe do Agente</label>
+                    <select id="armament-class" onchange="applyClassBaseStats(); saveData();" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 text-ovv-lightGreen font-mono font-bold focus:outline-none text-sm">
+                        <option value="Fortificado">Fortificado</option>
+                        <option value="Intelectual">Intelectual</option>
+                        <option value="Esotérico">Esotérico</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mt-4 pt-4 border-t border-ovv-lightGreen/15">
+                <div>
+                    <label class="block text-[10px] font-mono text-stone-400 mb-1">Nível do Agente</label>
+                    <input type="number" id="semideus-level" value="1" min="1" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-2 py-1.5 text-center text-stone-100 font-mono font-bold focus:outline-none focus:border-ovv-lightGreen text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-mono text-stone-400 mb-1">Deslocamento</label>
+                    <input type="text" id="char-deslocamento" value="9m" readonly class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-2 py-1.5 text-center text-ovv-lightGreen font-mono font-bold text-xs cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-mono text-stone-400 mb-1">Pontos de Mérito (EXP)</label>
+                    <input type="number" id="exp-points" value="0" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 text-center text-stone-100 font-mono font-bold focus:outline-none text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-mono text-stone-400 mb-1">Defesa / Esquiva</label>
+                    <input type="number" id="aspis-val" value="10" oninput="saveData()" class="w-full bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 text-center text-ovv-lightGreen font-mono font-bold focus:outline-none text-xs">
+                </div>
+                <div class="col-span-2 flex items-end">
+                    <button onclick="openDiceModal('Proteção / Esquiva', parseInt(document.getElementById('aspis-val').value||0))" class="w-full bg-ovv-700 hover:bg-ovv-600 border border-ovv-lightGreen/30 text-ovv-lightGreen text-xs font-mono py-2 rounded transition">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Rolar Esquiva
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- GUIA RÁPIDO DO SISTEMA E REGRAS DE CLASSE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Regras de Criação de Agente -->
+            <div class="bg-ovv-900/90 border border-ovv-lightGreen/20 rounded p-4 text-xs font-mono space-y-1.5">
+                <div class="text-ovv-lightGreen font-bold border-b border-ovv-lightGreen/15 pb-1 flex items-center">
+                    <i class="fa-solid fa-circle-info mr-2"></i> <———————⚠︎———————> INFORMAÇÕES DE CRIAÇÃO
+                </div>
+                <ul class="text-stone-300 space-y-1 list-disc list-inside text-[11px]">
+                    <li><strong>Atributos:</strong> São 6 pontos para distribuir entre os 5 atributos.</li>
+                    <li><strong>Perícias Treinadas:</strong> 5 Perícias à sua escolha + valor do Intelecto. Cada perícia treinada concede <strong>+5</strong> no teste.</li>
+                    <li><strong>Atributo em 0:</strong> Se deixar um atributo em 0, você rola <strong>2 dados (d20)</strong> e fica com o <strong>pior resultado</strong>.</li>
+                </ul>
+            </div>
+
+            <!-- Resumo das Classes -->
+            <div class="bg-ovv-900/90 border border-ovv-lightGreen/20 rounded p-4 text-xs font-mono space-y-1.5">
+                <div class="text-ovv-lightGreen font-bold border-b border-ovv-lightGreen/15 pb-1 flex items-center">
+                    <i class="fa-solid fa-address-card mr-2"></i> <———————⚠︎———————> CLASSES DE AGENTE
+                </div>
+                <div class="space-y-1 text-[11px]">
+                    <p><strong class="text-amber-500">Fortificado:</strong> Vida: 20 (+6/nível) | Sanidade: 14 (+4/nível) | Ganha: Luta ou Pontaria</p>
+                    <p><strong class="text-ovv-toxic">Intelectual:</strong> Vida: 17 (+5/nível) | Sanidade: 17 (+5/nível) | Ganha: 1 Perícia à Escolha</p>
+                    <p><strong class="text-stone-300">Esotérico:</strong> Vida: 14 (+4/nível) | Sanidade: 20 (+6/nível) | Ganha: Religião ou Ocultismo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. RECURSOS VITAIS: VITALIDADE, SANIDADE & RESISTÊNCIA -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Vida & Sanidade -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Vida / Integridade Física -->
+                <div class="ovv-card p-5">
+                    <div class="flex flex-wrap items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-heart-pulse text-ovv-alert text-xl"></i>
+                            <h2 class="font-mono font-bold text-base text-stone-100"><———————⚠︎———————> VIDA</h2>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-mono">
+                            <span class="text-stone-400">Máx: <input type="number" id="hp-max" value="20" oninput="updateBars(); saveData();" class="w-12 bg-ovv-900 border border-ovv-lightGreen/20 rounded px-1 text-center text-stone-100"></span>
+                            <span class="text-stone-400">Temp: <input type="number" id="hp-temp" value="0" oninput="updateBars(); saveData();" class="w-12 bg-ovv-900 border border-ovv-lightGreen/20 rounded px-1 text-center text-stone-100"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mb-3">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-mono text-stone-400 block mb-1">Vida Atual</label>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjustResource('hp-current', -5)" class="bg-stone-900 text-ovv-alert px-2 py-1 rounded hover:bg-stone-800 text-xs font-bold font-mono border border-ovv-alert/40">-5</button>
+                                <button onclick="adjustResource('hp-current', -1)" class="bg-stone-900 text-ovv-alert px-3 py-1 rounded hover:bg-stone-800 font-mono border border-ovv-alert/40"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="hp-current" value="20" oninput="updateBars(); saveData();" class="w-full bg-ovv-900 border border-ovv-alert/50 rounded py-1.5 text-center text-ovv-alert font-bold font-mono text-lg">
+                                <button onclick="adjustResource('hp-current', 1)" class="bg-stone-900 text-ovv-lightGreen px-3 py-1 rounded hover:bg-stone-800 font-mono border border-ovv-lightGreen/30"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjustResource('hp-current', 5)" class="bg-stone-900 text-ovv-lightGreen px-2 py-1 rounded hover:bg-stone-800 text-xs font-bold font-mono border border-ovv-lightGreen/30 cursor-pointer">+5</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-ovv-900 rounded border border-ovv-alert/30 h-3 overflow-hidden">
+                        <div id="hp-bar" class="bg-gradient-to-r from-ovv-rust to-ovv-alert h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Sanidade / Estresse Psicológico -->
+                <div class="ovv-card p-5">
+                    <div class="flex flex-wrap items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-brain text-ovv-toxic text-xl"></i>
+                            <h2 class="font-mono font-bold text-base text-stone-100"><———————⚠︎———————> SANIDADE</h2>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-mono">
+                            <span class="text-stone-400">Máx: <input type="number" id="stamina-max" value="14" oninput="updateBars(); saveData();" class="w-12 bg-ovv-900 border border-ovv-lightGreen/20 rounded px-1 text-center text-stone-100"></span>
+                            <span class="text-stone-400">Temp: <input type="number" id="stamina-temp" value="0" oninput="updateBars(); saveData();" class="w-12 bg-ovv-900 border border-ovv-lightGreen/20 rounded px-1 text-center text-stone-100"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mb-3">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-mono text-stone-400 block mb-1">Sanidade Atual</label>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjustResource('stamina-current', -5)" class="bg-stone-900 text-ovv-toxic px-2 py-1 rounded hover:bg-stone-800 text-xs font-bold font-mono border border-ovv-toxic/40">-5</button>
+                                <button onclick="adjustResource('stamina-current', -1)" class="bg-stone-900 text-ovv-toxic px-3 py-1 rounded hover:bg-stone-800 font-mono border border-ovv-toxic/40"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="stamina-current" value="14" oninput="updateBars(); saveData();" class="w-full bg-ovv-900 border border-ovv-toxic/50 rounded py-1.5 text-center text-ovv-toxic font-bold font-mono text-lg">
+                                <button onclick="adjustResource('stamina-current', 1)" class="bg-stone-900 text-ovv-lightGreen px-3 py-1 rounded hover:bg-stone-800 font-mono border border-ovv-lightGreen/30"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjustResource('stamina-current', 5)" class="bg-stone-900 text-ovv-lightGreen px-2 py-1 rounded hover:bg-stone-800 text-xs font-bold font-mono border border-ovv-lightGreen/30">+5</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-ovv-900 rounded border border-ovv-toxic/30 h-3 overflow-hidden">
+                        <div id="stamina-bar" class="bg-gradient-to-r from-ovv-swamp to-ovv-toxic h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testes de Morte & Vantagens/Sequelas -->
+            <div class="space-y-6">
+                <!-- Testes de Resistência de Morte -->
+                <div class="ovv-card p-5">
+                    <h2 class="font-mono font-bold text-xs text-ovv-lightGreen mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-heart-crack mr-1"></i> TESTES DE RESISTÊNCIA DE MORTE</span>
+                    </h2>
+                    
+                    <div class="space-y-3 font-mono text-xs">
+                        <div>
+                            <span class="text-stone-400 block mb-1">Sucessos (Estabilizou)</span>
+                            <div class="flex space-x-2">
+                                <label class="flex-1 bg-ovv-900 border border-ovv-lightGreen/30 rounded p-1.5 text-center cursor-pointer hover:bg-ovv-700/40 transition">
+                                    <input type="checkbox" id="death-success-1" onchange="saveData()" class="accent-ovv-lightGreen mr-1"> 1
+                                </label>
+                                <label class="flex-1 bg-ovv-900 border border-ovv-lightGreen/30 rounded p-1.5 text-center cursor-pointer hover:bg-ovv-700/40 transition">
+                                    <input type="checkbox" id="death-success-2" onchange="saveData()" class="accent-ovv-lightGreen mr-1"> 2
+                                </label>
+                                <label class="flex-1 bg-ovv-900 border border-ovv-lightGreen/30 rounded p-1.5 text-center cursor-pointer hover:bg-ovv-700/40 transition">
+                                    <input type="checkbox" id="death-success-3" onchange="saveData()" class="accent-ovv-lightGreen mr-1"> 3
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-stone-400 block mb-1">Falhas (Gravíssimo)</span>
+                            <div class="flex space-x-2">
+                                <label class="flex-1 bg-ovv-900 border border-ovv-alert/40 rounded p-1.5 text-center cursor-pointer hover:bg-stone-900/60 transition">
+                                    <input type="checkbox" id="death-fail-1" onchange="saveData()" class="accent-ovv-alert mr-1"> 1
+                                </label>
+                                <label class="flex-1 bg-ovv-900 border border-ovv-alert/40 rounded p-1.5 text-center cursor-pointer hover:bg-stone-900/60 transition">
+                                    <input type="checkbox" id="death-fail-2" onchange="saveData()" class="accent-ovv-alert mr-1"> 2
+                                </label>
+                                <label class="flex-1 bg-ovv-900 border border-ovv-alert/40 rounded p-1.5 text-center cursor-pointer hover:bg-stone-900/60 transition">
+                                    <input type="checkbox" id="death-fail-3" onchange="saveData()" class="accent-ovv-alert mr-1"> 3
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bençãos & Fardos -->
+                <div class="ovv-card p-5">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-mono text-xs font-bold text-ovv-lightGreen"><i class="fa-solid fa-shield mr-1"></i> VANTAGENS DE CAMPO</h3>
+                                <button onclick="addBencao()" class="bg-ovv-lightGreen text-stone-950 font-bold text-[10px] font-mono px-2 py-0.5 rounded hover:bg-[#e3d5ab] transition">+ Adicionar</button>
+                            </div>
+                            <div id="bencaos-list" class="space-y-1.5"></div>
+                        </div>
+                        <div class="pt-2 border-t border-ovv-lightGreen/10">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-mono text-xs font-bold text-ovv-alert"><i class="fa-solid fa-skull-crossbones mr-1"></i> TRAUMAS & MUTAÇÕES</h3>
+                                <button onclick="addFardo()" class="bg-stone-900 border border-ovv-alert/40 text-ovv-alert font-bold text-[10px] font-mono px-2 py-0.5 rounded hover:bg-stone-800 transition">+ Adicionar</button>
+                            </div>
+                            <div id="fardos-list" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ATRIBUTOS E PERÍCIAS DE INVESTIGAÇÃO -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Atributos do Agente (5 Atributos Principais) -->
+            <div class="lg:col-span-4 space-y-4">
+                <div class="ovv-card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                            <i class="fa-solid fa-chart-simple mr-2"></i> <———————⚠︎———————> ATRIBUTOS
+                        </h2>
+                        <button onclick="addNewAttributePrompt()" class="bg-ovv-lightGreen text-black text-xs font-mono font-bold px-2 py-1 rounded hover:bg-emerald-300 transition">+ Atributo</button>
+                    </div>
+
+                    <div class="space-y-3" id="attributes-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perícias do Agente (28 Perícias do Sistema) -->
+            <div class="lg:col-span-8">
+                <div class="ovv-card p-5">
+                    <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
+                        <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                            <i class="fa-solid fa-clipboard-list mr-2"></i> <———————⚠︎———————> PERÍCIAS
+                        </h2>
+                        <button onclick="openSkillModal()" class="bg-ovv-lightGreen text-black font-bold text-xs font-mono px-3 py-1.5 rounded hover:bg-emerald-300 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nova Perícia</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5" id="skills-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. EQUIPAMENTO TÁTICO & ULTIMATES -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Armamento -->
+            <div class="lg:col-span-6">
+                <div class="ovv-card p-5 h-full flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                                <i class="fa-solid fa-gun mr-2"></i> ARMAMENTO & ATAQUES
+                            </h2>
+                            <button onclick="openWeaponModal()" class="bg-ovv-lightGreen text-stone-950 font-bold text-xs font-mono px-3 py-1.5 rounded hover:bg-[#e3d5ab] transition flex items-center space-x-1">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>+ Arma</span>
+                            </button>
+                        </div>
+
+                        <div class="space-y-3" id="weapons-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ultimates e Habilidades Especiais -->
+            <div class="lg:col-span-6">
+                <div class="ovv-card p-5 h-full border-2 border-ovv-lightGreen/30 bg-gradient-to-b from-[#171714] to-[#21211b] relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                                <i class="fa-solid fa-radiation text-ovv-toxic mr-2"></i> HABILIDADES DE CLASSE & ULTIMATES
+                            </h2>
+                            <button onclick="openUltimateModal()" class="bg-ovv-toxic text-stone-950 font-bold text-xs font-mono px-3 py-1.5 rounded hover:bg-[#d9b868] transition flex items-center space-x-1">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>+ Habilidade</span>
+                            </button>
+                        </div>
+
+                        <div class="space-y-4" id="ultimates-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. REGISTROS DE APARÊNCIA, HISTÓRIA E ANOTAÇÕES -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-6 space-y-6">
+                <!-- Aparência -->
+                <div class="ovv-card p-5">
+                    <h2 class="font-mono font-bold text-sm text-ovv-lightGreen mb-3 flex items-center">
+                        <i class="fa-solid fa-eye mr-2"></i> <———————⚠︎———————> APARÊNCIA:
+                    </h2>
+                    <textarea id="bio-appearance" oninput="saveData()" rows="5" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded p-3 text-xs text-white focus:outline-none focus:border-ovv-lightGreen resize-none leading-relaxed font-mono" placeholder="Descreva traços visuais do agente, uniformes táticos, equipamentos e estilo visual..."></textarea>
+                </div>
+
+                <!-- Habilidades Passivas -->
+                <div class="ovv-card p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                            <i class="fa-solid fa-bolt mr-2"></i> HABILIDADES PASSIVAS & PODERES
+                        </h2>
+                        <button onclick="addPassiveAbility()" class="bg-ovv-lightGreen text-black font-bold text-xs font-mono px-2.5 py-1 rounded hover:bg-emerald-300 transition">
+                            <i class="fa-solid fa-plus"></i> + Nova Passiva
+                        </button>
+                    </div>
+                    <div class="space-y-2" id="passive-abilities-list"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-6 space-y-6">
+                <!-- Inventário -->
+                <div class="ovv-card p-5">
+                    <div class="flex flex-wrap items-center justify-between mb-3 gap-2">
+                        <h2 class="font-mono font-bold text-sm text-ovv-lightGreen flex items-center">
+                            <i class="fa-solid fa-briefcase mr-2"></i> INVENTÁRIO TÁTICO DE CAMPO
+                        </h2>
+                        <div class="flex items-center space-x-2 font-mono">
+                            <div class="flex items-center space-x-1 bg-ovv-900 px-2 py-1 rounded border border-ovv-lightGreen/30 text-xs">
+                                <span class="text-slate-400">Espaço:</span>
+                                <span id="inventory-space-count" class="font-bold text-ovv-lightGreen">0</span>
+                                <span class="text-slate-400">/</span>
+                                <input type="number" id="inventory-max-space" value="10" oninput="saveData(); renderInventory();" class="w-10 bg-ovv-800 text-center font-bold text-white rounded border border-ovv-lightGreen/20 focus:outline-none">
+                            </div>
+                            <button onclick="openInventoryModal()" class="bg-ovv-lightGreen text-black font-bold text-xs px-2.5 py-1 rounded hover:bg-emerald-300 transition">
+                                <i class="fa-solid fa-plus"></i> + Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2" id="inventory-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Anotações -->
+                <div class="ovv-card p-5">
+                    <h3 class="font-mono text-xs font-bold text-ovv-lightGreen mb-2"><i class="fa-solid fa-pen-to-square mr-1"></i> ANOTAÇÕES DE CAMPO</h3>
+                    <textarea id="notes-text" oninput="saveData()" rows="4" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded p-2.5 text-xs text-white focus:outline-none focus:border-ovv-lightGreen resize-none font-mono" placeholder="Anotações sobre a anomalia em Juína e investigações..."></textarea>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Ultimate -->
+    <div id="ultimate-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="ovv-card max-w-md w-full p-5 relative">
+            <h3 class="font-mono text-base text-ovv-lightGreen font-bold mb-4" id="ultimate-modal-title">Adicionar Habilidade</h3>
+            <div class="space-y-3 font-mono">
+                <input type="hidden" id="ultimate-edit-index" value="-1">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Nome da Habilidade / Poder</label>
+                    <input type="text" id="modal-ult-name" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Custo (PE/Sanidade)</label>
+                        <input type="text" id="modal-ult-cost" placeholder="Ex: 2 Sanidade" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-1.5 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Alcance / Recarga</label>
+                        <input type="text" id="modal-ult-status" placeholder="Ex: Curto / 1x rodada" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-1.5 text-white text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Efeito / Descrição</label>
+                    <textarea id="modal-ult-desc" rows="3" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded p-2 text-white text-xs resize-none"></textarea>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="closeUltimateModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs">Cancelar</button>
+                    <button onclick="saveUltimateItem()" class="flex-1 ovv-btn text-white font-bold py-2 rounded text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Proficiência -->
+    <div id="skill-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="ovv-card max-w-sm w-full p-5 relative">
+            <h3 class="font-mono text-base text-ovv-lightGreen font-bold mb-4">Adicionar Perícia Personalizada</h3>
+            <div class="space-y-3 font-mono">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Nome da Perícia</label>
+                    <input type="text" id="modal-skill-name" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Atributo Base</label>
+                    <select id="modal-skill-attr" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-ovv-lightGreen font-bold text-xs">
+                        <option value="AGI">Agilidade (AGI)</option>
+                        <option value="INT">Intelecto (INT)</option>
+                        <option value="VIG">Vigor (VIG)</option>
+                        <option value="PRE">Presença (PRE)</option>
+                        <option value="FOR">Força (FOR)</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="closeSkillModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs">Cancelar</button>
+                    <button onclick="saveCustomSkill()" class="flex-1 ovv-btn text-white font-bold py-2 rounded text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Armamento -->
+    <div id="weapon-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="ovv-card max-w-sm w-full p-5 relative">
+            <h3 class="font-mono text-base text-ovv-lightGreen font-bold mb-4" id="weapon-modal-title">Adicionar Arma / Ataque</h3>
+            <div class="space-y-3 font-mono">
+                <input type="hidden" id="weapon-edit-index" value="-1">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Nome da Arma / Ataque</label>
+                    <input type="text" id="modal-weapon-name" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Tipo de Dano / Balística</label>
+                    <input type="text" id="modal-weapon-type" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs" placeholder="Ex: Fogo, Lâmina, Impacto">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Dano Base</label>
+                    <input type="text" id="modal-weapon-damage" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs" placeholder="Ex: 1d8 + FOR">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Alcance e Detalhes</label>
+                    <input type="text" id="modal-weapon-details" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs" placeholder="Ex: Curto, Crítico 19/x2">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="closeWeaponModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs">Cancelar</button>
+                    <button onclick="saveWeaponItem()" class="flex-1 ovv-btn text-white font-bold py-2 rounded text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Inventário -->
+    <div id="inventory-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="ovv-card max-w-sm w-full p-5 relative">
+            <h3 class="font-mono text-base text-ovv-lightGreen font-bold mb-4" id="inv-modal-title">Adicionar Item Tático</h3>
+            <div class="space-y-3 font-mono">
+                <input type="hidden" id="inv-edit-index" value="-1">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Nome do Item</label>
+                    <input type="text" id="modal-inv-name" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Espaço / Carga</label>
+                    <input type="number" step="1" id="modal-inv-weight" value="1" class="w-full bg-ovv-900 border border-ovv-lightGreen/30 rounded px-3 py-2 text-white text-xs">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="closeInventoryModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs">Cancelar</button>
+                    <button onclick="saveInventoryItem()" class="flex-1 ovv-btn text-white font-bold py-2 rounded text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração inicial com os dados e 28 perícias solicitados
+        const defaultState = {
+            charName: "Silas Silva",
+            playerName: "Adrien",
+            charMedo: "Ser consumido pela floresta mutante em Juína",
+            charDeslocamento: "9m",
+            semideusLevel: 1,
+            armamentClass: "Fortificado",
+            expPoints: 0,
+            aspisVal: 10,
+            hpMax: 20,
+            hpTemp: 0,
+            hpCurrent: 20,
+            staminaMax: 14,
+            staminaTemp: 0,
+            staminaCurrent: 14,
+            deathSuccess: [false, false, false],
+            deathFail: [false, false, false],
+            bencaos: ["Filtro Biológico da OVV", "Treinamento em Mata Fechada"],
+            fardos: ["Fobia de Aglomerações"],
+            ultimates: [
+                {
+                    name: "Postura Inabalável",
+                    cost: "2 Sanidade",
+                    status: "1x por Rodada",
+                    desc: "Recebe +5 em testes de Fortitude e reduz o próximo dano físico sofrido à metade."
+                }
+            ],
+            activeAbilities: [],
+            passiveAbilities: ["Resistência Toxicológica"],
+            bioAppearance: "Agente tático com traje de isolamento biológico da OVV. Olhar atento e máscara de ar acoplada ao peito.",
+            notesText: "INVESTIGAÇÃO JUÍNA: O objeto que caiu gerou mutações no ecossistema local. Árvores estão se desenvolvendo exponencialmente.",
+            attributes: {
+                "Agilidade": { val: 1, bonus: 0 },
+                "Intelecto": { val: 1, bonus: 0 },
+                "Vigor": { val: 1, bonus: 0 },
+                "Presença": { val: 1, bonus: 0 },
+                "Força": { val: 1, bonus: 0 }
+            },
+            skills: [
+                { name: "Acrobacia", attr: "AGI", prepared: false },
+                { name: "Adestramento", attr: "PRE", prepared: false },
+                { name: "Artes", attr: "PRE", prepared: false },
+                { name: "Atletismo", attr: "FOR", prepared: false },
+                { name: "Atualidades", attr: "INT", prepared: false },
+                { name: "Ciências", attr: "INT", prepared: false },
+                { name: "Crime", attr: "AGI", prepared: false },
+                { name: "Diplomacia", attr: "PRE", prepared: false },
+                { name: "Enganação", attr: "PRE", prepared: false },
+                { name: "Fortitude", attr: "VIG", prepared: true },
+                { name: "Furtividade", attr: "AGI", prepared: false },
+                { name: "Iniciativa", attr: "AGI", prepared: true },
+                { name: "Intimidação", attr: "PRE", prepared: false },
+                { name: "Intuição", attr: "PRE", prepared: false },
+                { name: "Investigação", attr: "INT", prepared: true },
+                { name: "Luta", attr: "FOR", prepared: true },
+                { name: "Medicina", attr: "INT", prepared: false },
+                { name: "Ocultismo", attr: "INT", prepared: false },
+                { name: "Percepção", attr: "PRE", prepared: true },
+                { name: "Pilotagem", attr: "AGI", prepared: false },
+                { name: "Pontaria", attr: "AGI", prepared: false },
+                { name: "Profissão", attr: "INT", prepared: false },
+                { name: "Reflexos", attr: "AGI", prepared: false },
+                { name: "Religião", attr: "PRE", prepared: false },
+                { name: "Sobrevivência", attr: "INT", prepared: true },
+                { name: "Tática", attr: "INT", prepared: false },
+                { name: "Tecnologia", attr: "INT", prepared: false },
+                { name: "Vontade", attr: "PRE", prepared: false }
+            ],
+            weapons: [
+                { name: "Machete Tático", type: "Corte / Lâmina", damage: "1d6 + FOR", details: "Ataque corpo a corpo." },
+                { name: "Pistola Tática OVV", type: "Fogo", damage: "1d8 + AGI", details: "Alcance Curto." }
+            ],
+            inventoryMaxSpace: 10,
+            inventory: [
+                { name: "Kit Médico de Emergência", weight: 2 },
+                { name: "Rádio Transmissor OVV", weight: 1 },
+                { name: "Lanterna Bio-Luminosa", weight: 1 }
+            ]
+        };
+
+        let state = JSON.parse(JSON.stringify(defaultState));
+
+        // Aplica vida e sanidade base de acordo com a classe escolhida
+        function applyClassBaseStats() {
+            const cls = document.getElementById('armament-class')?.value || state.armamentClass;
+            const lvl = parseInt(document.getElementById('semideus-level')?.value || state.semideusLevel || 1);
+
+            if (cls === "Fortificado") {
+                state.hpMax = 20 + (lvl - 1) * 6;
+                state.staminaMax = 14 + (lvl - 1) * 4;
+            } else if (cls === "Intelectual") {
+                state.hpMax = 17 + (lvl - 1) * 5;
+                state.staminaMax = 17 + (lvl - 1) * 5;
+            } else if (cls === "Esotérico") {
+                state.hpMax = 14 + (lvl - 1) * 4;
+                state.staminaMax = 20 + (lvl - 1) * 6;
+            }
+
+            const hpMaxInput = document.getElementById('hp-max');
+            const stMaxInput = document.getElementById('stamina-max');
+            if (hpMaxInput) hpMaxInput.value = state.hpMax;
+            if (stMaxInput) stMaxInput.value = state.staminaMax;
+
+            updateBars();
+        }
+
+        // Carregar do LocalStorage
+        function loadData() {
+            const saved = localStorage.getItem('ovv_juina_agente_ficha_v2');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state = { ...defaultState, ...parsed };
+                } catch (e) {
+                    console.error("Erro ao carregar dados do Agente", e);
+                }
+            }
+            renderAll();
+        }
+
+        // Salvar no LocalStorage
+        function saveData(showFeedback = false) {
+            const getVal = (id, defaultVal = '') => {
+                const el = document.getElementById(id);
+                return el ? el.value : defaultVal;
+            };
+
+            state.charName = getVal('char-name');
+            state.playerName = getVal('player-name');
+            state.charMedo = getVal('char-medo');
+            state.semideusLevel = getVal('semideus-level', 1);
+            state.armamentClass = getVal('armament-class', 'Fortificado');
+            state.expPoints = getVal('exp-points', 0);
+            state.aspisVal = getVal('aspis-val', 10);
+            
+            state.hpMax = getVal('hp-max', 20);
+            state.hpTemp = getVal('hp-temp', 0);
+            state.hpCurrent = getVal('hp-current', 20);
+            
+            state.staminaMax = getVal('stamina-max', 14);
+            state.staminaTemp = getVal('stamina-temp', 0);
+            state.staminaCurrent = getVal('stamina-current', 14);
+
+            for(let i=1; i<=3; i++) {
+                const sEl = document.getElementById(`death-success-${i}`);
+                const fEl = document.getElementById(`death-fail-${i}`);
+                state.deathSuccess[i-1] = sEl ? sEl.checked : false;
+                state.deathFail[i-1] = fEl ? fEl.checked : false;
+            }
+
+            state.notesText = getVal('notes-text');
+            state.inventoryMaxSpace = parseFloat(getVal('inventory-max-space', 10));
+            state.bioAppearance = getVal('bio-appearance');
+
+            localStorage.setItem('ovv_juina_agente_ficha_v2', JSON.stringify(state));
+            if (showFeedback) {
+                showToast("Ficha atualizada com sucesso!");
+            }
+        }
+
+        function manualSave() {
+            saveData(true);
+        }
+
+        function exportPDF() {
+            saveData();
+            window.print();
+        }
+
+        function exportJSON() {
+            saveData();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Ficha_Agente_${state.charName || 'Agente'}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Dados exportados em JSON!");
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    state = { ...defaultState, ...imported };
+                    saveData();
+                    renderAll();
+                    showToast("Ficha importada com sucesso!");
+                } catch (err) {
+                    showToast("Erro ao importar arquivo JSON!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetData() {
+            if (confirm("Restaura a ficha para os dados padrão do sistema?")) {
+                state = JSON.parse(JSON.stringify(defaultState));
+                saveData();
+                renderAll();
+                showToast("Ficha restaurada!");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            if (!toast || !toastMsg) return;
+            toastMsg.innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-20');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-20');
+            }, 3000);
+        }
+
+        function updateBars() {
+            const hpCur = parseInt(document.getElementById('hp-current')?.value || 0);
+            const hpMax = parseInt(document.getElementById('hp-max')?.value || 1);
+            const hpBar = document.getElementById('hp-bar');
+            if (hpBar) {
+                const hpPct = Math.min(100, Math.max(0, (hpCur / hpMax) * 100));
+                hpBar.style.width = `${hpPct}%`;
+            }
+
+            const stCur = parseInt(document.getElementById('stamina-current')?.value || 0);
+            const stMax = parseInt(document.getElementById('stamina-max')?.value || 1);
+            const stBar = document.getElementById('stamina-bar');
+            if (stBar) {
+                const stPct = Math.min(100, Math.max(0, (stCur / stMax) * 100));
+                stBar.style.width = `${stPct}%`;
+            }
+        }
+
+        function adjustResource(id, amount) {
+            const el = document.getElementById(id);
+            if (el) {
+                let val = parseInt(el.value || 0);
+                val += amount;
+                if (val < 0) val = 0;
+                el.value = val;
+                updateBars();
+                saveData();
+            }
+        }
+
+        // Atributos
+        function renderAttributes() {
+            const container = document.getElementById('attributes-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            Object.keys(state.attributes).forEach(attrKey => {
+                const attr = state.attributes[attrKey];
+                const div = document.createElement('div');
+                div.className = "bg-ovv-900 border border-ovv-lightGreen/30 rounded p-2.5 flex items-center justify-between";
+                
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button onclick="removeAttribute('${attrKey}')" class="text-xs text-red-400 hover:text-red-300 mr-1" title="Remover Atributo"><i class="fa-solid fa-trash"></i></button>
+                        <span class="font-mono text-xs font-bold text-white uppercase">${attrKey}</span>
+                    </div>
+                    <div class="flex items-center space-x-2 font-mono">
+                        <div class="flex items-center space-x-1">
+                            <span class="text-[10px] text-slate-400">Mod</span>
+                            <input type="number" value="${attr.bonus}" onchange="updateAttr('${attrKey}', 'bonus', this.value)" class="w-10 bg-ovv-800 border border-ovv-lightGreen/20 rounded text-center text-xs text-ovv-lightGreen">
+                        </div>
+                        <input type="number" value="${attr.val}" onchange="updateAttr('${attrKey}', 'val', this.value)" class="w-12 bg-ovv-800 border border-ovv-lightGreen/40 rounded text-center text-sm font-bold text-white">
+                        <button onclick="openDiceModal('${attrKey}', ${attr.val + attr.bonus}, ${attr.val === 0})" class="bg-ovv-700 hover:bg-ovv-600 text-ovv-lightGreen text-xs px-2 py-1 rounded border border-ovv-lightGreen/30">
+                            <i class="fa-solid fa-dice"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateAttr(key, field, val) {
+            state.attributes[key][field] = parseInt(val || 0);
+            saveData();
+            renderSkills();
+        }
+
+        function addNewAttributePrompt() {
+            const name = prompt("Digite o nome do Atributo:");
+            if (name && name.trim()) {
+                const formatted = name.trim();
+                if (!state.attributes[formatted]) {
+                    state.attributes[formatted] = { val: 1, bonus: 0 };
+                    saveData();
+                    renderAttributes();
+                    renderSkills();
+                }
+            }
+        }
+
+        function removeAttribute(key) {
+            if (confirm(`Remover o atributo ${key}?`)) {
+                delete state.attributes[key];
+                saveData();
+                renderAttributes();
+                renderSkills();
+            }
+        }
+
+        // Mapeamento de siglas das perícias
+        function findAttributeObject(attrKey) {
+            const map = {
+                'AGI': 'Agilidade',
+                'INT': 'Intelecto',
+                'FOR': 'Força',
+                'PRE': 'Presença',
+                'VIG': 'Vigor'
+            };
+            const fullName = map[attrKey] || attrKey;
+            return state.attributes[fullName] || state.attributes[attrKey] || { val: 0, bonus: 0 };
+        }
+
+        // Perícias
+        function renderSkills() {
+            const container = document.getElementById('skills-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            state.skills.forEach((skill, index) => {
+                const attrObj = findAttributeObject(skill.attr);
+                const isPrepared = !!skill.prepared;
+                const preparedBonus = isPrepared ? 5 : 0;
+                const totalMod = attrObj.val + attrObj.bonus + preparedBonus;
+                const isAttrZero = attrObj.val === 0;
+
+                const div = document.createElement('div');
+                div.className = `bg-ovv-900 border ${isPrepared ? 'border-ovv-lightGreen bg-ovv-700/40' : 'border-ovv-lightGreen/20'} rounded p-2 flex items-center justify-between text-xs font-mono transition-all`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button onclick="removeSkill(${index})" class="text-slate-500 hover:text-red-400 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                        <span class="font-medium text-slate-200 text-xs">${skill.name}</span>
+                        <span class="bg-ovv-800 text-ovv-lightGreen px-1.5 py-0.5 rounded text-[10px] font-bold border border-ovv-lightGreen/20">${skill.attr}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="flex items-center space-x-1 cursor-pointer bg-ovv-800/80 px-1.5 py-0.5 rounded border border-ovv-lightGreen/20 text-[10px] text-slate-300 hover:text-ovv-lightGreen" title="Treinada (+5)">
+                            <input type="checkbox" ${isPrepared ? 'checked' : ''} onchange="toggleSkillPrepared(${index}, this.checked)" class="accent-ovv-lightGreen text-xs">
+                            <span class="${isPrepared ? 'text-ovv-lightGreen font-bold' : ''}">Treinada (+5)</span>
+                        </label>
+                        <span class="text-ovv-lightGreen font-bold text-sm min-w-[24px] text-right">${totalMod >= 0 ? '+' + totalMod : totalMod}</span>
+                        <button onclick="openDiceModal('${skill.name} (${skill.attr}${isPrepared ? ' - Treinada' : ''})', ${totalMod}, ${isAttrZero})" class="bg-ovv-800 hover:bg-ovv-700 text-ovv-lightGreen p-1.5 rounded border border-ovv-lightGreen/30">
+                            <i class="fa-solid fa-dice"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleSkillPrepared(index, checked) {
+            state.skills[index].prepared = checked;
+            saveData();
+            renderSkills();
+        }
+
+        function removeSkill(index) {
+            state.skills.splice(index, 1);
+            saveData();
+            renderSkills();
+        }
+
+        function openSkillModal() {
+            document.getElementById('skill-modal').classList.remove('hidden');
+        }
+        function closeSkillModal() {
+            document.getElementById('skill-modal').classList.add('hidden');
+        }
+        function saveCustomSkill() {
+            const name = document.getElementById('modal-skill-name').value.trim();
+            const attr = document.getElementById('modal-skill-attr').value;
+            if (name) {
+                state.skills.push({ name, attr, prepared: false });
+                saveData();
+                renderSkills();
+                closeSkillModal();
+                document.getElementById('modal-skill-name').value = '';
+            }
+        }
+
+        // Bençãos & Fardos
+        function renderBencaosFardos() {
+            const bencaosList = document.getElementById('bencaos-list');
+            const fardosList = document.getElementById('fardos-list');
+            if (!bencaosList || !fardosList) return;
+
+            bencaosList.innerHTML = '';
+            state.bencaos.forEach((b, i) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-ovv-900 border border-ovv-lightGreen/20 rounded px-2 py-1 text-xs text-ovv-lightGreen font-mono";
+                item.innerHTML = `
+                    <input type="text" value="${b}" onchange="state.bencaos[${i}] = this.value; saveData();" class="bg-transparent border-none w-full focus:outline-none text-xs">
+                    <button onclick="state.bencaos.splice(${i},1); saveData(); renderBencaosFardos();" class="text-stone-500 hover:text-ovv-alert ml-1 text-xs"><i class="fa-solid fa-trash"></i></button>
+                `;
+                bencaosList.appendChild(item);
+            });
+
+            fardosList.innerHTML = '';
+            state.fardos.forEach((f, i) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-ovv-900 border border-ovv-alert/30 rounded px-2 py-1 text-xs text-ovv-alert font-mono";
+                item.innerHTML = `
+                    <input type="text" value="${f}" onchange="state.fardos[${i}] = this.value; saveData();" class="bg-transparent border-none w-full focus:outline-none text-xs">
+                    <button onclick="state.fardos.splice(${i},1); saveData(); renderBencaosFardos();" class="text-stone-500 hover:text-ovv-alert ml-1 text-xs"><i class="fa-solid fa-trash"></i></button>
+                `;
+                fardosList.appendChild(item);
+            });
+        }
+
+        function addBencao() {
+            state.bencaos.push("Vantagem de Campo");
+            saveData();
+            renderBencaosFardos();
+        }
+
+        function addFardo() {
+            state.fardos.push("Trauma / Sequela");
+            saveData();
+            renderBencaosFardos();
+        }
+
+        // Habilidades Passivas
+        function renderAbilities() {
+            const passiveList = document.getElementById('passive-abilities-list');
+            if (!passiveList) return;
+
+            passiveList.innerHTML = '';
+            state.passiveAbilities.forEach((pas, i) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-ovv-900 border border-ovv-lightGreen/20 rounded px-2.5 py-1.5 text-xs text-slate-200 font-mono";
+                item.innerHTML = `
+                    <input type="text" value="${pas}" onchange="state.passiveAbilities[${i}] = this.value; saveData();" class="bg-transparent border-none w-full focus:outline-none text-xs text-white">
+                    <button onclick="state.passiveAbilities.splice(${i},1); saveData(); renderAbilities();" class="text-slate-500 hover:text-red-400 ml-1"><i class="fa-solid fa-trash"></i></button>
+                `;
+                passiveList.appendChild(item);
+            });
+        }
+
+        function addPassiveAbility() {
+            state.passiveAbilities.push("Nova Habilidade Passiva");
+            saveData();
+            renderAbilities();
+        }
+
+        // Ultimates & Poderes
+        function renderUltimates() {
+            const container = document.getElementById('ultimates-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            state.ultimates.forEach((ult, i) => {
+                const card = document.createElement('div');
+                card.className = "bg-ovv-900/90 border border-ovv-toxic/40 rounded p-3.5 space-y-2 relative font-mono";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-ovv-lightGreen/15 pb-2">
+                        <h3 class="text-xs font-bold text-ovv-toxic flex items-center">
+                            <i class="fa-solid fa-biohazard mr-1.5 text-ovv-toxic"></i> ${ult.name}
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openUltimateModal(${i})" class="text-stone-400 hover:text-ovv-lightGreen text-xs"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="removeUltimate(${i})" class="text-stone-400 hover:text-ovv-alert text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between text-[11px] text-stone-400 gap-2">
+                        <span><strong class="text-ovv-lightGreen">Custo:</strong> ${ult.cost || 'N/A'}</span>
+                        <span><strong class="text-ovv-lightGreen">Status:</strong> ${ult.status || 'Pronto'}</span>
+                    </div>
+                    <p class="text-xs text-stone-300 leading-relaxed bg-ovv-800/60 p-2 rounded border border-ovv-lightGreen/10">
+                        ${ult.desc}
+                    </p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openUltimateModal(editIndex = -1) {
+            document.getElementById('ultimate-edit-index').value = editIndex;
+            if (editIndex >= 0) {
+                const ult = state.ultimates[editIndex];
+                document.getElementById('ultimate-modal-title').innerText = "Editar Habilidade";
+                document.getElementById('modal-ult-name').value = ult.name;
+                document.getElementById('modal-ult-cost').value = ult.cost;
+                document.getElementById('modal-ult-status').value = ult.status;
+                document.getElementById('modal-ult-desc').value = ult.desc;
+            } else {
+                document.getElementById('ultimate-modal-title').innerText = "Adicionar Habilidade";
+                document.getElementById('modal-ult-name').value = '';
+                document.getElementById('modal-ult-cost').value = '';
+                document.getElementById('modal-ult-status').value = '';
+                document.getElementById('modal-ult-desc').value = '';
+            }
+            document.getElementById('ultimate-modal').classList.remove('hidden');
+        }
+
+        function closeUltimateModal() {
+            document.getElementById('ultimate-modal').classList.add('hidden');
+        }
+
+        function saveUltimateItem() {
+            const idx = parseInt(document.getElementById('ultimate-edit-index').value);
+            const name = document.getElementById('modal-ult-name').value.trim();
+            const cost = document.getElementById('modal-ult-cost').value.trim();
+            const status = document.getElementById('modal-ult-status').value.trim();
+            const desc = document.getElementById('modal-ult-desc').value.trim();
+
+            if (!name) return;
+
+            const ultObj = { name, cost, status, desc };
+
+            if (idx >= 0) {
+                state.ultimates[idx] = ultObj;
+            } else {
+                state.ultimates.push(ultObj);
+            }
+
+            saveData();
+            renderUltimates();
+            closeUltimateModal();
+        }
+
+        function removeUltimate(index) {
+            if (confirm("Excluir esta Habilidade?")) {
+                state.ultimates.splice(index, 1);
+                saveData();
+                renderUltimates();
+            }
+        }
+
+        // Armamentos
+        function renderWeapons() {
+            const container = document.getElementById('weapons-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            state.weapons.forEach((w, i) => {
+                const card = document.createElement('div');
+                card.className = "bg-ovv-900 border border-ovv-lightGreen/20 rounded p-3 space-y-1 relative font-mono";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-ovv-lightGreen flex items-center">
+                            <i class="fa-solid fa-crosshair text-ovv-lightGreen mr-1.5"></i> ${w.name}
+                        </h4>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openWeaponModal(${i})" class="text-slate-400 hover:text-ovv-lightGreen text-xs"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="removeWeapon(${i})" class="text-slate-400 hover:text-red-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-400">
+                        <span>Tipo: ${w.type || '-'}</span>
+                        <span class="text-ovv-lightGreen font-semibold">${w.damage || '-'}</span>
+                    </div>
+                    ${w.details ? `<p class="text-[10px] text-slate-400 border-t border-ovv-lightGreen/10 pt-1 mt-1">${w.details}</p>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openWeaponModal(editIndex = -1) {
+            document.getElementById('weapon-edit-index').value = editIndex;
+            if (editIndex >= 0) {
+                const w = state.weapons[editIndex];
+                document.getElementById('weapon-modal-title').innerText = "Editar Armamento";
+                document.getElementById('modal-weapon-name').value = w.name;
+                document.getElementById('modal-weapon-type').value = w.type;
+                document.getElementById('modal-weapon-damage').value = w.damage;
+                document.getElementById('modal-weapon-details').value = w.details;
+            } else {
+                document.getElementById('weapon-modal-title').innerText = "Adicionar Armamento";
+                document.getElementById('modal-weapon-name').value = '';
+                document.getElementById('modal-weapon-type').value = '';
+                document.getElementById('modal-weapon-damage').value = '';
+                document.getElementById('modal-weapon-details').value = '';
+            }
+            document.getElementById('weapon-modal').classList.remove('hidden');
+        }
+
+        function closeWeaponModal() {
+            document.getElementById('weapon-modal').classList.add('hidden');
+        }
+
+        function saveWeaponItem() {
+            const idx = parseInt(document.getElementById('weapon-edit-index').value);
+            const name = document.getElementById('modal-weapon-name').value.trim();
+            const type = document.getElementById('modal-weapon-type').value.trim();
+            const damage = document.getElementById('modal-weapon-damage').value.trim();
+            const details = document.getElementById('modal-weapon-details').value.trim();
+
+            if (!name) return;
+
+            const wObj = { name, type, damage, details };
+
+            if (idx >= 0) {
+                state.weapons[idx] = wObj;
+            } else {
+                state.weapons.push(wObj);
+            }
+
+            saveData();
+            renderWeapons();
+            closeWeaponModal();
+        }
+
+        function removeWeapon(index) {
+            if (confirm("Remover este armamento?")) {
+                state.weapons.splice(index, 1);
+                saveData();
+                renderWeapons();
+            }
+        }
+
+        // Inventário
+        function renderInventory() {
+            const container = document.getElementById('inventory-list');
+            const countEl = document.getElementById('inventory-space-count');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let totalWeight = 0;
+            state.inventory.forEach(item => {
+                totalWeight += parseFloat(item.weight || 0);
+            });
+
+            const maxSpace = state.inventoryMaxSpace || 10;
+            if (countEl) {
+                countEl.innerText = totalWeight;
+                if (totalWeight > maxSpace) {
+                    countEl.className = "font-bold text-red-400 animate-pulse font-mono";
+                } else {
+                    countEl.className = "font-bold text-ovv-lightGreen font-mono";
+                }
+            }
+
+            state.inventory.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = "bg-ovv-900 border border-ovv-lightGreen/20 rounded px-3 py-1.5 flex items-center justify-between text-xs font-mono";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2 flex-1 mr-2">
+                        <span class="text-slate-200 font-medium">${item.name}</span>
+                        <span class="bg-ovv-800 text-ovv-lightGreen text-[10px] px-1.5 py-0.5 rounded border border-ovv-lightGreen/20 font-mono">${item.weight} esp</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openInventoryModal(${i})" class="text-slate-400 hover:text-ovv-lightGreen text-xs"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="removeInventoryItem(${i})" class="text-slate-400 hover:text-red-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openInventoryModal(editIndex = -1) {
+            document.getElementById('inv-edit-index').value = editIndex;
+            if (editIndex >= 0) {
+                const item = state.inventory[editIndex];
+                document.getElementById('inv-modal-title').innerText = "Editar Item Tático";
+                document.getElementById('modal-inv-name').value = item.name;
+                document.getElementById('modal-inv-weight').value = item.weight;
+            } else {
+                document.getElementById('inv-modal-title').innerText = "Adicionar Item Tático";
+                document.getElementById('modal-inv-name').value = '';
+                document.getElementById('modal-inv-weight').value = 1;
+            }
+            document.getElementById('inventory-modal').classList.remove('hidden');
+        }
+
+        function closeInventoryModal() {
+            document.getElementById('inventory-modal').classList.add('hidden');
+        }
+
+        function saveInventoryItem() {
+            const idx = parseInt(document.getElementById('inv-edit-index').value);
+            const name = document.getElementById('modal-inv-name').value.trim();
+            const weight = parseFloat(document.getElementById('modal-inv-weight').value || 1);
+
+            if (!name) return;
+
+            const itemObj = { name, weight };
+
+            if (idx >= 0) {
+                state.inventory[idx] = itemObj;
+            } else {
+                state.inventory.push(itemObj);
+            }
+
+            saveData();
+            renderInventory();
+            closeInventoryModal();
+        }
+
+        function removeInventoryItem(index) {
+            state.inventory.splice(index, 1);
+            saveData();
+            renderInventory();
+        }
+
+        // Sistema de Rolagem de Dados d20 (Com suporte a Atributo em 0 = Pior de 2 Dados)
+        let activeRollBonus = 0;
+        let activeRollLabel = "";
+        let isDisadvantaged = false;
+
+        function openDiceModal(label, bonus, zeroAttr = false) {
+            activeRollBonus = bonus;
+            activeRollLabel = label;
+            isDisadvantaged = zeroAttr;
+            document.getElementById('dice-title').innerText = `Teste: ${label}`;
+            document.getElementById('dice-result').innerText = "-";
+            
+            if (zeroAttr) {
+                document.getElementById('dice-breakdown').innerText = `Atributo em 0! Rola 2d20 e pega o PIOR valor + (${bonus >= 0 ? '+' + bonus : bonus})`;
+            } else {
+                document.getElementById('dice-breakdown').innerText = `Rolar d20 + (${bonus >= 0 ? '+' + bonus : bonus})`;
+            }
+            
+            document.getElementById('dice-modal').classList.remove('hidden');
+        }
+
+        function closeDiceModal() {
+            document.getElementById('dice-modal').classList.add('hidden');
+        }
+
+        function executeRoll() {
+            const resultEl = document.getElementById('dice-result');
+            const breakdownEl = document.getElementById('dice-breakdown');
+
+            if (isDisadvantaged) {
+                const d20_1 = Math.floor(Math.random() * 20) + 1;
+                const d20_2 = Math.floor(Math.random() * 20) + 1;
+                const worstD20 = Math.min(d20_1, d20_2);
+                const total = worstD20 + activeRollBonus;
+
+                resultEl.innerText = total;
+                breakdownEl.innerHTML = `Dados: <strong>[${d20_1}, ${d20_2}]</strong> (Pior: ${worstD20}) | Modificador: <strong>${activeRollBonus >= 0 ? '+' + activeRollBonus : activeRollBonus}</strong>`;
+                resultEl.className = "text-6xl font-black font-mono text-amber-400 mb-2";
+            } else {
+                const d20 = Math.floor(Math.random() * 20) + 1;
+                const total = d20 + activeRollBonus;
+
+                resultEl.innerText = total;
+                breakdownEl.innerHTML = `Dado (d20): <strong>${d20}</strong> | Modificador: <strong>${activeRollBonus >= 0 ? '+' + activeRollBonus : activeRollBonus}</strong>`;
+
+                if (d20 === 20) {
+                    resultEl.className = "text-6xl font-black font-mono text-emerald-400 mb-2 glow-green animate-bounce";
+                } else if (d20 === 1) {
+                    resultEl.className = "text-6xl font-black font-mono text-red-500 mb-2";
+                } else {
+                    resultEl.className = "text-6xl font-black font-mono text-ovv-lightGreen glow-green mb-2";
+                }
+            }
+        }
+
+        // Renderizar tudo
+        function renderAll() {
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el && val !== undefined) el.value = val;
+            };
+
+            setVal('char-name', state.charName);
+            setVal('player-name', state.playerName);
+            setVal('char-medo', state.charMedo || '');
+            setVal('semideus-level', state.semideusLevel);
+            setVal('armament-class', state.armamentClass || 'Fortificado');
+            setVal('exp-points', state.expPoints);
+            setVal('aspisVal', state.aspisVal);
+            setVal('inventory-max-space', state.inventoryMaxSpace || 10);
+
+            setVal('hp-max', state.hpMax);
+            setVal('hp-temp', state.hpTemp);
+            setVal('hp-current', state.hpCurrent);
+
+            setVal('stamina-max', state.staminaMax);
+            setVal('stamina-temp', state.staminaTemp);
+            setVal('stamina-current', state.staminaCurrent);
+
+            for (let i = 1; i <= 3; i++) {
+                const sEl = document.getElementById(`death-success-${i}`);
+                const fEl = document.getElementById(`death-fail-${i}`);
+                if (sEl) sEl.checked = !!state.deathSuccess[i - 1];
+                if (fEl) fEl.checked = !!state.deathFail[i - 1];
+            }
+
+            setVal('notes-text', state.notesText || '');
+            setVal('bio-appearance', state.bioAppearance || '');
+
+            updateBars();
+            renderAttributes();
+            renderSkills();
+            renderBencaosFardos();
+            renderAbilities();
+            renderUltimates();
+            renderWeapons();
+            renderInventory();
+        }
+
+        // Auto salvamento ao fechar/recarregar
+        window.addEventListener('beforeunload', () => {
+            saveData();
+        });
+
+        // Inicialização
+        window.onload = function () {
+            loadData();
+        };
+    </script>
+</body>
+</html>
